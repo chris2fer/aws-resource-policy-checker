@@ -1,14 +1,4 @@
 
-#
-# Documentation for `hashicorp/setup-terraform` is located here: https://github.com/hashicorp/setup-terraform
-
-# 3. Reference the GitHub secret in step using the `hashicorp/setup-terraform` GitHub Action.
-#   Example:
-#     - name: Setup Terraform
-#       uses: hashicorp/setup-terraform@v1
-#       with:
-#         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
 name: 'Terraform'
 
 on:
@@ -39,26 +29,15 @@ jobs:
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
-      
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@master
-      with:
-        role-to-assume: arn:aws:iam::857389377478:role/MyGithubOrg
-        aws-region: us-west-2
-        
+
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       run: terraform init
 
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
-<<<<<<< HEAD
-      run: terraform fmt -check 
+      run: terraform fmt
 
-=======
-      run: terraform fmt -check
-      
->>>>>>> 8340a1dbf66606f3122d79642cffd9651ae352ca
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       run: terraform plan -input=false
