@@ -39,7 +39,13 @@ jobs:
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
-
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@master
+      with:
+        role-to-assume: arn:aws:iam::857389377478:role/MyGithubOrg
+        aws-region: us-west-2
+        
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       run: terraform init
@@ -47,13 +53,7 @@ jobs:
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
       run: terraform fmt -check
-
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@master
-      with:
-        role-to-assume: arn:aws:iam::857389377478:role/MyGithubOrg
-        aws-region: us-west-2
-        
+      
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       run: terraform plan -input=false
