@@ -31,7 +31,7 @@ data "archive_file" "policy_reader_archive" {
   output_path = "policy_reader_payload.zip"
 }
 
-resource "aws_lambda_function" "test_lambda" {
+resource "aws_lambda_function" "policy_reader" {
   # If the file is not in the current working directory you will need to include a
   # path.module in the filename.
   filename      = "policy_reader_payload.zip"
@@ -46,6 +46,19 @@ resource "aws_lambda_function" "test_lambda" {
   environment {
     variables = {
       stage = var.stage
+    }
+  }
+}
+
+resource "aws_lambda_alias" "lambda_alias" {
+  name             = "placeholder"
+  description      = "a sample description"
+  function_name    = aws_lambda_function.policy_reader.arn
+  function_version = "1"
+
+  routing_config {
+    additional_version_weights = {
+      "2" = 0.5
     }
   }
 }
