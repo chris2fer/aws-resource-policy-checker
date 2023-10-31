@@ -39,7 +39,7 @@ resource "aws_lambda_function" "test_lambda" {
   role          = aws_iam_role.policy_reader.arn
   handler       = "policy_reader.lambda_handler"
 
-  source_code_hash = data.archive_file.policy_reader.output_base64sha256
+  source_code_hash = data.archive_file.policy_reader_archive.output_base64sha256
 
   runtime = "python3.11"
 
