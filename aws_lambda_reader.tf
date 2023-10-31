@@ -56,9 +56,9 @@ resource "aws_lambda_alias" "lambda_alias" {
   function_name    = aws_lambda_function.policy_reader.arn
   function_version = "1"
 
-  routing_config {
-    additional_version_weights = {
-      "2" = 0.5
-    }
-  }
+#  routing_config {
+#    additional_version_weights = {
+#      "2" = 0.5
+#    }
+#  }
 }
