@@ -32,7 +32,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@master
       with:
-        role-to-assume: arn:aws:iam::857389377478:role/MyGithubOrg
+        role-to-assume: env.oidc_role
         aws-region: us-west-2
         
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
