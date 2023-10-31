@@ -32,12 +32,12 @@ data "archive_file" "policy_reader_archive" {
 }
 
 resource "aws_lambda_function" "policy_reader" {
-  # If the file is not in the current working directory you will need to include a
-  # path.module in the filename.
+
   filename      = "policy_reader_payload.zip"
   function_name = "${local.function_name}-${var.stage}"
   role          = aws_iam_role.policy_reader.arn
   handler       = "policy_reader.lambda_handler"
+  timeout       = 30
 
   source_code_hash = data.archive_file.policy_reader_archive.output_base64sha256
 
