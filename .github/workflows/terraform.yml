@@ -45,7 +45,7 @@ jobs:
       
     # Generates an execution plan for Terraform
     - name: Terraform Plan
-      run: terraform plan -input=false -no-color
+      run: terraform plan -input=false -no-color -out=tfplan && terraform show -no-color tfplan  
       continue-on-error: true
 
       # On push to "main", build or change infrastructure according to Terraform configuration files
