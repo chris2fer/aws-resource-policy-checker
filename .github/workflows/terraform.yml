@@ -48,6 +48,30 @@ jobs:
       run: terraform plan -input=false -no-color -out=tfplan && terraform show -no-color tfplan  
       continue-on-error: true
 
+    - name: Reformat Plan
+      run: |
+        echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
+        | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt          
+
+    - name: Put Plan in Env Var
+      run: |
+        PLAN=$(cat plan.txt)
+        echo "PLAN<<EOF" >> $GITHUB_ENV
+        echo "$PLAN" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV          
+
+    - name: Post Plan to GitHub PR
+      uses: mshick/add-pr-comment@v1
+      with:
+        allow-repeats: true
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        repo-token-user-login: 'github-actions[bot]'
+        message: |
+          ## ${{ matrix.path }} plan
+          ```diff
+          ${{ env.PLAN }}
+          ```            
+          
       # On push to "main", build or change infrastructure according to Terraform configuration files
       # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
     - name: Terraform Apply
