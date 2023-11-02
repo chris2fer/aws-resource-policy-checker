@@ -45,35 +45,45 @@ jobs:
       
     # Generates an execution plan for Terraform
     - name: Terraform Plan
-      run: terraform plan -input=false -no-color -out=tfplan && terraform show -no-color tfplan  
-      continue-on-error: true
-
-    - name: Reformat Plan
       run: |
-        echo '${{ steps.plan.outputs.stdout || steps.plan.outputs.stderr }}' \
-        | sed -E 's/^([[:space:]]+)([-+])/\2\1/g' > plan.txt          
+        terraform plan -out=tfplan
+        echo "::set-output name=has_changes::true"
+      continue-on-error: true 
 
-    - name: Put Plan in Env Var
+    - name: Check for Plan Changes
+      if: steps.plan.outputs.has_changes != 'true'
       run: |
-        PLAN=$(cat plan.txt)
-        echo "PLAN<<EOF" >> $GITHUB_ENV
-        echo "$PLAN" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV          
+        echo "No changes. Skipping apply step."
+        exit 0
 
-    - name: Post Plan to GitHub PR
-      uses: mshick/add-pr-comment@v1
+    - name: Wait for Approval
+      if: github.event.inputs.skip_apply != 'yes'
+      uses: actions/github-script@v5
       with:
-        allow-repeats: true
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        repo-token-user-login: 'github-actions[bot]'
-        message: |
-          ## ${{ matrix.path }} plan
-          ```diff
-          ${{ env.PLAN }}
-          ```            
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { repo, sha } = context
+          const pr = await github.pulls.list({
+            ...repo,
+            head: `${repo.owner}:${github.ref}`
+          })
+          const prNumber = pr.data[0].number
+          const review = await github.pulls.createReviewRequest({
+            ...repo,
+            pull_number: prNumber,
+            reviewers: ['<GITHUB-USERNAME-OF-REVIEWER>'] // Modify with the username of the reviewer
+          })
           
-      # On push to "main", build or change infrastructure according to Terraform configuration files
-      # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
+          // Wait for approval (could add more sophisticated logic here)
+          let approved = false
+          while (!approved) {
+            await new Promise(resolve => setTimeout(resolve, 10000)) // Wait 10 seconds
+            const reviews = await github.pulls.listReviews({...repo, pull_number: prNumber})
+            approved = reviews.data.some(r => r.state === 'APPROVED')
+          }        
+
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      if: github.event.inputs.skip_apply != 'yes'
+      run: terraform apply tfplan        
+          
+
