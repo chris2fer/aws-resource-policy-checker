@@ -3,7 +3,12 @@ name: 'Terraform'
 on:
   push:
     branches: [ "main" ]
-  pull_request:
+  workflow_dispatch:
+    inputs:
+      skip_apply:
+        description: 'Skip apply step (yes/no)?'
+        required: true
+        default: 'no'
 
 permissions:
   id-token: write
