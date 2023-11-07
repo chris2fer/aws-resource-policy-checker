@@ -3,12 +3,6 @@ name: 'Terraform'
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch:
-    inputs:
-      skip_apply:
-        description: 'Skip apply step (yes/no)?'
-        required: true
-        default: 'no'
 
 permissions:
   id-token: write
@@ -38,7 +32,7 @@ jobs:
       uses: hashicorp/setup-terraform@v2
       
     - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@master
+      uses: aws-actions/configure-aws-credentials@v4
       with:
         role-to-assume: ${{ secrets.oidc_role }}
         aws-region: us-west-2
@@ -47,51 +41,51 @@ jobs:
     - name: Terraform Init
       run: terraform init
 
-    # Checks that all Terraform configuration files adhere to a canonical format
-    - name: Terraform Validate
-      run: terraform validate -no-color
+    # # Checks that all Terraform configuration files adhere to a canonical format
+    # - name: Terraform Validate
+    #   run: terraform validate -no-color
       
-    # Generates an execution plan for Terraform
-    - name: Terraform Plan
-      run: |
-        terraform plan -out=tfplan
-        echo "::set-output name=has_changes::true"
-      continue-on-error: true 
+    # # Generates an execution plan for Terraform
+    # - name: Terraform Plan
+    #   run: |
+    #     terraform plan -out=tfplan
+    #     echo "::set-output name=has_changes::true"
+    #   continue-on-error: true 
 
-    - name: Check for Plan Changes
-      if: steps.plan.outputs.has_changes != 'true'
-      run: |
-        echo "No changes. Skipping apply step."
-        exit 0
+    # - name: Check for Plan Changes
+    #   if: steps.plan.outputs.has_changes != 'true'
+    #   run: |
+    #     echo "No changes. Skipping apply step."
+    #     exit 0
 
-    - name: Wait for Approval
-      if: github.event.inputs.skip_apply != 'yes'
-      uses: actions/github-script@v5
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-          const { repo, sha } = context
-          const pr = await github.pulls.list({
-            ...repo,
-            head: `${repo.owner}:${github.ref}`
-          })
-          const prNumber = pr.data[0].number
-          const review = await github.pulls.createReviewRequest({
-            ...repo,
-            pull_number: prNumber,
-            reviewers: ['<GITHUB-USERNAME-OF-REVIEWER>'] // Modify with the username of the reviewer
-          })
+    # - name: Wait for Approval
+    #   if: github.event.inputs.skip_apply != 'yes'
+    #   uses: actions/github-script@v5
+    #   with:
+    #     github-token: ${{ secrets.GITHUB_TOKEN }}
+    #     script: |
+    #       const { repo, sha } = context
+    #       const pr = await github.pulls.list({
+    #         ...repo,
+    #         head: `${repo.owner}:${github.ref}`
+    #       })
+    #       const prNumber = pr.data[0].number
+    #       const review = await github.pulls.createReviewRequest({
+    #         ...repo,
+    #         pull_number: prNumber,
+    #         reviewers: ['<GITHUB-USERNAME-OF-REVIEWER>'] // Modify with the username of the reviewer
+    #       })
           
-          // Wait for approval (could add more sophisticated logic here)
-          let approved = false
-          while (!approved) {
-            await new Promise(resolve => setTimeout(resolve, 10000)) // Wait 10 seconds
-            const reviews = await github.pulls.listReviews({...repo, pull_number: prNumber})
-            approved = reviews.data.some(r => r.state === 'APPROVED')
-          }        
+    #       // Wait for approval (could add more sophisticated logic here)
+    #       let approved = false
+    #       while (!approved) {
+    #         await new Promise(resolve => setTimeout(resolve, 10000)) // Wait 10 seconds
+    #         const reviews = await github.pulls.listReviews({...repo, pull_number: prNumber})
+    #         approved = reviews.data.some(r => r.state === 'APPROVED')
+    #       }        
 
-    - name: Terraform Apply
-      if: github.event.inputs.skip_apply != 'yes'
-      run: terraform apply tfplan        
+    # - name: Terraform Apply
+    #   if: github.event.inputs.skip_apply != 'yes'
+    #   run: terraform apply tfplan        
           
 
